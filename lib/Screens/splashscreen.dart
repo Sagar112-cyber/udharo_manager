@@ -22,7 +22,7 @@ class _SplashscreenState extends State<Splashscreen> {
     checkLoginStatus();   // Call function inside initState
   }
 
-  // ✔ Clean function to check login status
+  // Clean function to check login status
   void checkLoginStatus() async {
 
     await Future.delayed(const Duration(seconds: 3)); // splash delay

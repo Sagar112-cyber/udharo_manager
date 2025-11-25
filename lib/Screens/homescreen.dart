@@ -2,9 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:udharo_manager/Screens/addstock.dart';
 import 'package:udharo_manager/Screens/addudharo.dart';
 import 'package:udharo_manager/Screens/coustmorlist.dart';
 import 'package:udharo_manager/Screens/loginscreen.dart';
+import 'package:udharo_manager/Screens/stockscreen.dart';
 
 class Homescreen extends StatefulWidget {
   const Homescreen({super.key});
@@ -16,6 +18,7 @@ class Homescreen extends StatefulWidget {
 class _HomescreenState extends State<Homescreen> {
   final DatabaseReference customersRef = FirebaseDatabase.instance.ref('customers');
   final DatabaseReference totalCollectionRef = FirebaseDatabase.instance.ref('total_collection');
+  final DatabaseReference totalStockRef=FirebaseDatabase.instance.ref('total_Stock');
 
   @override
   Widget build(BuildContext context) {
@@ -51,13 +54,24 @@ class _HomescreenState extends State<Homescreen> {
 
               // 🔹 Dashboard Cards
               SingleChildScrollView(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _dashboardCard("Total Udharo", _totalUdharoCard()),
-                    _dashboardCard("Customers", _totalCustomersCard()),
-                    _dashboardCard("Collection", _totalCollectionCard()),
-                  ],
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _dashboardCard("Total Udharo", _totalUdharoCard()),
+                            _dashboardCard("Collection", _totalCollectionCard()),
+
+                          ],
+                        ),
+                      ),
+
+                    ],
+                  ),
                 ),
               ),
 
@@ -82,8 +96,15 @@ class _HomescreenState extends State<Homescreen> {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerList()));
                 },
               ),
+              const SizedBox(height: 10),
+            _bigButton(label: 'Stock lIST', color: Colors.blueAccent, onTap: (){
+              Navigator.push(context,MaterialPageRoute(builder: (context)=>StockScreen()));
+        }),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
+              _bigButton(label: "➕ Add Stock", color: Colors.green,  onTap: (){
+                Navigator.push(context, MaterialPageRoute(builder: (context)=>Addstock()));
+              }),
 
               Align(
                 alignment: Alignment.centerLeft,
@@ -131,9 +152,9 @@ class _HomescreenState extends State<Homescreen> {
             "• App Created: 2025\n"
                 "• Version: 1.0.0\n"
                 "• Developer: Your Name\n"
-                "• Purpose: Manage Udharo, Collections & Customers\n"
+                "• Purpose: Manage Udharo, Collections & Customers,with your iteam Stocks\n"
                 "• Status: Stable\n"
-                "• Last Update: Today",
+                "• Last Update: 2025-10-25",
             style: TextStyle(fontSize: 15, height: 1.6, color: Colors.black87),
           ),
         ],
@@ -146,7 +167,7 @@ class _HomescreenState extends State<Homescreen> {
   Widget _dashboardCard(String title, Widget valueWidget) {
     return Container(
       width: 110,
-      height: 130,
+      height: 150,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -232,6 +253,20 @@ class _HomescreenState extends State<Homescreen> {
         );
       },
     );
+  }
+  Widget _totalStockCard(){
+    return StreamBuilder<DatabaseEvent>(stream:totalStockRef.onValue , builder: (context,snapShot){
+      double total=0;
+      if (snapShot.hasData && snapShot.data!.snapshot.value!=null){
+        final data=snapShot.data!.snapshot.value as Map;
+        data.forEach((key,value){
+          if (value is Map && value['iteam']!=null){
+            total +=double.tryParse(value['iteam'].toString())??0.0;
+          }
+        });
+      }
+      return Text(total.toString(),style: TextStyle(fontSize: 22,fontWeight: FontWeight.bold),);
+    });
   }
 
   Widget _totalUdharoCard() {

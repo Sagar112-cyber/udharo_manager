@@ -1,3 +1,4 @@
+// lib/Screens/customer_details_page.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 
@@ -22,11 +23,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
         .child('customers')
         .child(widget.customerId);
 
-    historyRef = FirebaseDatabase.instance
-        .ref()
-        .child('customers')
-        .child(widget.customerId)
-        .child('history');
+    historyRef = customerRef.child('history');
   }
 
   @override
@@ -38,10 +35,9 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
         elevation: 0,
         backgroundColor: Colors.deepPurple,
       ),
-
-      body: StreamBuilder(
+      body: StreamBuilder<DatabaseEvent>(
         stream: customerRef.onValue,
-        builder: (context, AsyncSnapshot<DatabaseEvent> snapshot) {
+        builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -55,7 +51,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
 
           return Column(
             children: [
-              // 🌟 BEAUTIFUL TOP SUMMARY CARD
+              // 🌟 Customer Summary Card
               Container(
                 width: double.infinity,
                 margin: const EdgeInsets.all(16),
@@ -76,22 +72,20 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      customer['name'],
+                      customer['name']?.toString() ?? 'No Name',
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
-
                     const SizedBox(height: 6),
-
                     Row(
                       children: [
                         const Icon(Icons.phone, color: Colors.white70),
                         const SizedBox(width: 6),
                         Text(
-                          customer['phone'],
+                          customer['phone']?.toString() ?? '-',
                           style: const TextStyle(
                             fontSize: 16,
                             color: Colors.white70,
@@ -99,11 +93,9 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 18),
-
                     Text(
-                      "Remaining Udharo: Rs. ${customer['amount']}",
+                      "Remaining Udharo: Rs. ${customer['amount']?.toString() ?? '0'}",
                       style: const TextStyle(
                         fontSize: 20,
                         color: Colors.white,
@@ -128,13 +120,13 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 8),
 
+              // 🌟 Transaction History List
               Expanded(
-                child: StreamBuilder(
+                child: StreamBuilder<DatabaseEvent>(
                   stream: historyRef.onValue,
-                  builder: (context, AsyncSnapshot<DatabaseEvent> snapshot2) {
+                  builder: (context, snapshot2) {
                     if (!snapshot2.hasData) {
                       return const Center(child: CircularProgressIndicator());
                     }
@@ -150,16 +142,19 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
 
                     List historyList = historyMap.values.toList();
 
-                    // Sort: Newest First
-                    historyList.sort((a, b) =>
-                        b['date'].compareTo(a['date']));
+                    // Sort newest first
+                    historyList.sort((a, b) {
+                      final dateA = a['date']?.toString() ?? '';
+                      final dateB = b['date']?.toString() ?? '';
+                      return dateB.compareTo(dateA);
+                    });
 
                     return ListView.builder(
                       itemCount: historyList.length,
                       itemBuilder: (context, index) {
                         var item = historyList[index];
                         bool isPayment =
-                            item['type'] == "Payment Received";
+                            (item['type']?.toString() ?? '') == "Payment Received";
 
                         return Container(
                           margin: const EdgeInsets.symmetric(
@@ -179,23 +174,22 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                               backgroundColor:
                               isPayment ? Colors.green : Colors.red,
                               child: Icon(
-                                isPayment ? Icons.arrow_downward : Icons.arrow_upward,
+                                isPayment
+                                    ? Icons.arrow_downward
+                                    : Icons.arrow_upward,
                                 color: Colors.white,
                               ),
                             ),
-
                             title: Text(
-                              item['type'],
+                              item['type']?.toString() ?? '-',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: isPayment ? Colors.green : Colors.red,
                               ),
                             ),
-
                             subtitle: Text(
-                              "Rs. ${item['amount']}\n${item['date']} - ${item['time']}",
+                              "Rs. ${item['amount']?.toString() ?? '0'}\n${item['date']?.toString() ?? '-'} - ${item['time']?.toString() ?? '-'}",
                             ),
-
                             isThreeLine: true,
                           ),
                         );
@@ -209,7 +203,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
         },
       ),
 
-      // 🌟 TWO FLOATING BUTTONS
+      // 🌟 Floating Action Buttons
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -221,9 +215,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
               _addUdharoDialog(context);
             },
           ),
-
           const SizedBox(height: 10),
-
           FloatingActionButton(
             heroTag: "payIn",
             backgroundColor: Colors.green,
@@ -237,7 +229,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
     );
   }
 
-  // ADD UDHARO
+  // 🌟 Add Udharo
   void _addUdharoDialog(BuildContext context) {
     TextEditingController amountController = TextEditingController();
 
@@ -255,22 +247,27 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
             ),
           ),
           actions: [
-            TextButton(child: const Text("Cancel"), onPressed: () => Navigator.pop(context)),
+            TextButton(
+                child: const Text("Cancel"),
+                onPressed: () => Navigator.pop(context)),
             TextButton(
               child: const Text("Add", style: TextStyle(color: Colors.blue)),
               onPressed: () async {
-                double amount = double.parse(amountController.text.trim());
+                double amount =
+                    double.tryParse(amountController.text.trim()) ?? 0;
 
                 DatabaseEvent event = await customerRef.once();
-                double oldAmount =
-                double.parse(event.snapshot.child("amount").value.toString());
-
+                final oldAmountStr =
+                    event.snapshot.child("amount").value?.toString() ?? "0";
+                double oldAmount = double.tryParse(oldAmountStr) ?? 0;
                 double newAmount = oldAmount + amount;
 
                 await customerRef.update({"amount": newAmount.toString()});
 
-                String date = "${DateTime.now().day}-${DateTime.now().month}-${DateTime.now().year}";
-                String time = "${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}";
+                String date =
+                    "${DateTime.now().day}-${DateTime.now().month}-${DateTime.now().year}";
+                String time =
+                    "${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}";
 
                 await historyRef.push().set({
                   "type": "Udharo Added",
@@ -288,7 +285,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
     );
   }
 
-  // PAY IN
+  // 🌟 Pay In
   void _payInDialog(BuildContext context) {
     TextEditingController payController = TextEditingController();
 
@@ -306,15 +303,19 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
             ),
           ),
           actions: [
-            TextButton(child: const Text("Cancel"), onPressed: () => Navigator.pop(context)),
+            TextButton(
+                child: const Text("Cancel"),
+                onPressed: () => Navigator.pop(context)),
             TextButton(
               child: const Text("Pay", style: TextStyle(color: Colors.green)),
               onPressed: () async {
-                double payAmount = double.parse(payController.text.trim());
+                double payAmount =
+                    double.tryParse(payController.text.trim()) ?? 0;
 
                 DatabaseEvent event = await customerRef.once();
-                double oldAmount =
-                double.parse(event.snapshot.child("amount").value.toString());
+                final oldAmountStr =
+                    event.snapshot.child("amount").value?.toString() ?? "0";
+                double oldAmount = double.tryParse(oldAmountStr) ?? 0;
 
                 if (payAmount > oldAmount) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -327,8 +328,10 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
 
                 await customerRef.update({"amount": newAmount.toString()});
 
-                String date = "${DateTime.now().day}-${DateTime.now().month}-${DateTime.now().year}";
-                String time = "${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}";
+                String date =
+                    "${DateTime.now().day}-${DateTime.now().month}-${DateTime.now().year}";
+                String time =
+                    "${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}";
 
                 await historyRef.push().set({
                   "type": "Payment Received",

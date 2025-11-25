@@ -1,3 +1,4 @@
+// lib/Screens/customer_list.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:udharo_manager/Screens/Detials.dart';
@@ -11,7 +12,8 @@ class CustomerList extends StatefulWidget {
 }
 
 class _CustomerListState extends State<CustomerList> {
-  final DatabaseReference dbRef = FirebaseDatabase.instance.ref().child('customers');
+  final DatabaseReference dbRef =
+  FirebaseDatabase.instance.ref().child('customers');
 
   bool _isSearching = false;
   String _searchQuery = "";
@@ -21,6 +23,7 @@ class _CustomerListState extends State<CustomerList> {
     return Scaffold(
       extendBodyBehindAppBar: true,
 
+      // ************** AppBar with Search **************
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -49,8 +52,9 @@ class _CustomerListState extends State<CustomerList> {
         ),
         actions: [
           IconButton(
-            icon:
-            Icon(_isSearching ? Icons.close : Icons.search, color: Colors.white),
+            icon: Icon(
+                _isSearching ? Icons.close : Icons.search,
+                color: Colors.white),
             onPressed: () {
               setState(() {
                 _isSearching = !_isSearching;
@@ -61,11 +65,10 @@ class _CustomerListState extends State<CustomerList> {
         ],
       ),
 
+      // ************** Body with Gradient Background **************
       body: Container(
         width: double.infinity,
         height: double.infinity,
-
-        // 🔥 Gradient Background
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFF6EA8FF), Color(0xFF8E87FF)],
@@ -73,7 +76,6 @@ class _CustomerListState extends State<CustomerList> {
             end: Alignment.bottomRight,
           ),
         ),
-
         child: Padding(
           padding: const EdgeInsets.only(top: 110),
           child: StreamBuilder(
@@ -98,7 +100,8 @@ class _CustomerListState extends State<CustomerList> {
               List<Map<String, dynamic>> customers = [];
 
               customerMap.forEach((key, value) {
-                Map<String, dynamic> data = Map<String, dynamic>.from(value);
+                Map<String, dynamic> data =
+                Map<String, dynamic>.from(value ?? {});
                 data['id'] = key;
                 customers.add(data);
               });
@@ -116,7 +119,6 @@ class _CustomerListState extends State<CustomerList> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemBuilder: (context, index) {
                   var customer = customers[index];
-
                   return _buildCustomerCard(customer);
                 },
               );
@@ -125,6 +127,7 @@ class _CustomerListState extends State<CustomerList> {
         ),
       ),
 
+      // ************** Floating Button to Add Customer **************
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.white,
         child: const Icon(Icons.add, size: 32, color: Colors.black87),
@@ -136,8 +139,7 @@ class _CustomerListState extends State<CustomerList> {
     );
   }
 
-  // *******************************************************
-  // 🔥 MODERN CUSTOMER CARD UI
+  // ************** Customer Card UI **************
   Widget _buildCustomerCard(Map customer) {
     return GestureDetector(
       onTap: () {
@@ -145,12 +147,11 @@ class _CustomerListState extends State<CustomerList> {
             context,
             MaterialPageRoute(
                 builder: (context) =>
-                    CustomerDetailsPage(customerId: customer['id'])));
+                    CustomerDetailsPage(customerId: customer['id']?.toString() ?? '')));
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
-
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.20),
           borderRadius: BorderRadius.circular(18),
@@ -163,7 +164,6 @@ class _CustomerListState extends State<CustomerList> {
             ),
           ],
         ),
-
         child: Row(
           children: [
             // Profile Icon Circle
@@ -176,16 +176,14 @@ class _CustomerListState extends State<CustomerList> {
               ),
               child: const Icon(Icons.person, color: Colors.white),
             ),
-
             const SizedBox(width: 14),
-
             // Customer info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    customer['name'],
+                    customer['name']?.toString() ?? 'No Name', // Null safe
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 19,
@@ -194,7 +192,7 @@ class _CustomerListState extends State<CustomerList> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "📞 ${customer['phone']}",
+                    "📞 ${customer['phone']?.toString() ?? '-'}", // Null safe
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.9),
                       fontSize: 14,
@@ -203,7 +201,6 @@ class _CustomerListState extends State<CustomerList> {
                 ],
               ),
             ),
-
             // Amount box
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -212,27 +209,28 @@ class _CustomerListState extends State<CustomerList> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                "Rs. ${customer['amount']}",
+                "Rs. ${customer['amount']?.toString() ?? '0'}", // Null safe
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w900,
                 ),
               ),
             ),
-
             const SizedBox(width: 8),
-
             // Payment + delete buttons
             Column(
               children: [
                 InkWell(
                   onTap: () => _openPaymentDialog(customer),
-                  child: const Icon(Icons.payment, color: Colors.greenAccent, size: 28),
+                  child: const Icon(Icons.payment,
+                      color: Colors.greenAccent, size: 28),
                 ),
                 const SizedBox(height: 6),
                 InkWell(
-                  onTap: () => _confirmDelete(customer['id']),
-                  child: const Icon(Icons.delete, color: Colors.redAccent, size: 28),
+                  onTap: () =>
+                      _confirmDelete(customer['id']?.toString() ?? ''), // Null safe
+                  child:
+                  const Icon(Icons.delete, color: Colors.redAccent, size: 28),
                 ),
               ],
             )
@@ -242,8 +240,7 @@ class _CustomerListState extends State<CustomerList> {
     );
   }
 
-  // *******************************************************
-  // PAYMENT DIALOG (unchanged logic)
+  // ************** Payment Dialog **************
   void _openPaymentDialog(Map customer) {
     TextEditingController paymentController = TextEditingController();
 
@@ -251,7 +248,7 @@ class _CustomerListState extends State<CustomerList> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text("Payment for ${customer['name']}"),
+          title: Text("Payment for ${customer['name']?.toString() ?? ''}"),
           content: TextField(
             controller: paymentController,
             keyboardType: TextInputType.number,
@@ -269,7 +266,6 @@ class _CustomerListState extends State<CustomerList> {
               child: const Text("Pay", style: TextStyle(color: Colors.green)),
               onPressed: () async {
                 String paidText = paymentController.text.trim();
-
                 if (paidText.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("Enter a valid amount")),
@@ -277,8 +273,9 @@ class _CustomerListState extends State<CustomerList> {
                   return;
                 }
 
-                double paidAmount = double.parse(paidText);
-                double oldAmount = double.parse(customer['amount'].toString());
+                double paidAmount = double.tryParse(paidText) ?? 0;
+                double oldAmount =
+                    double.tryParse(customer['amount']?.toString() ?? "0") ?? 0;
                 double newAmount = oldAmount - paidAmount;
 
                 if (newAmount < 0) {
@@ -288,12 +285,10 @@ class _CustomerListState extends State<CustomerList> {
                   return;
                 }
 
-                String id = customer['id'];
+                String id = customer['id']?.toString() ?? '';
 
                 // Update customer's due amount
-                await dbRef.child(id).update({
-                  "amount": newAmount.toString(),
-                });
+                await dbRef.child(id).update({"amount": newAmount.toString()});
 
                 // Update total collection
                 DatabaseReference totalRef =
@@ -301,13 +296,10 @@ class _CustomerListState extends State<CustomerList> {
 
                 DatabaseEvent event = await totalRef.once();
                 double oldTotal = 0;
-
                 if (event.snapshot.value != null) {
-                  oldTotal = double.parse(event.snapshot.value.toString());
+                  oldTotal = double.tryParse(event.snapshot.value.toString()) ?? 0;
                 }
-
                 double newTotal = oldTotal + paidAmount;
-
                 await totalRef.set(newTotal);
 
                 Navigator.pop(context);
@@ -326,9 +318,9 @@ class _CustomerListState extends State<CustomerList> {
     );
   }
 
-  // *******************************************************
-  // DELETE CONFIRMATION
+  // ************** Delete Customer **************
   void _confirmDelete(String id) {
+    if (id.isEmpty) return; // Safety check
     showDialog(
       context: context,
       builder: (context) {
@@ -352,22 +344,4 @@ class _CustomerListState extends State<CustomerList> {
       },
     );
   }
-  Widget _buildDateTimeRow(dynamic timestamp) {
-    DateTime date = DateTime.fromMillisecondsSinceEpoch(int.parse(timestamp.toString()));
-
-    String formattedDate = "${date.day}/${date.month}/${date.year}";
-    String formattedTime = "${date.hour}:${date.minute.toString().padLeft(2, '0')}";
-
-    return Row(
-      children: [
-        Icon(Icons.calendar_month, size: 18, color: Colors.blue.shade400),
-        const SizedBox(width: 6),
-        Text(
-          "$formattedDate  |  $formattedTime",
-          style: TextStyle(color: Colors.blue.shade700, fontSize: 13),
-        ),
-      ],
-    );
-  }
-
 }
