@@ -12,7 +12,8 @@ class Stockdetials extends StatefulWidget {
 
 class _StockdetialsState extends State<Stockdetials> {
   late DatabaseReference stockRef;
-  DatabaseReference? historyRef; // Make it nullable to prevent LateInitializationError
+  DatabaseReference?
+  historyRef; // Make it nullable to prevent LateInitializationError
 
   @override
   void initState() {
@@ -30,9 +31,7 @@ class _StockdetialsState extends State<Stockdetials> {
   Widget build(BuildContext context) {
     if (historyRef == null) {
       // Show loading if references are not ready
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
@@ -72,13 +71,14 @@ class _StockdetialsState extends State<Stockdetials> {
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                        colors: [Colors.blueAccent, Colors.lightBlue]),
+                      colors: [Colors.blueAccent, Colors.lightBlue],
+                    ),
                     borderRadius: BorderRadius.circular(18),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.15),
                         blurRadius: 8,
-                      )
+                      ),
                     ],
                   ),
                   child: Column(
@@ -87,27 +87,34 @@ class _StockdetialsState extends State<Stockdetials> {
                       Text(
                         name,
                         style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white),
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Text(
                         "Purchase Rate: $purchase",
-                        style:
-                        const TextStyle(fontSize: 18, color: Colors.white),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          color: Colors.white,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       Text(
                         "Sell Rate: $sell",
-                        style:
-                        const TextStyle(fontSize: 18, color: Colors.white),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          color: Colors.white,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       Text(
                         "Remaining Stock: $remaining",
-                        style:
-                        const TextStyle(fontSize: 18, color: Colors.white),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          color: Colors.white,
+                        ),
                       ),
                     ],
                   ),
@@ -116,9 +123,10 @@ class _StockdetialsState extends State<Stockdetials> {
                 const Text(
                   "Stock History",
                   style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
                 const SizedBox(height: 10),
 
@@ -128,26 +136,29 @@ class _StockdetialsState extends State<Stockdetials> {
                     stream: historyRef!.onValue,
                     builder: (context, snapshot) {
                       if (!snapshot.hasData) {
-                        return const Center(
-                            child: CircularProgressIndicator());
+                        return const Center(child: CircularProgressIndicator());
                       }
 
                       var raw = snapshot.data!.snapshot.value;
 
                       if (raw == null || raw is! Map) {
                         return const Center(
-                            child: Text("No history yet",
-                                style: TextStyle(color: Colors.black54)));
+                          child: Text(
+                            "No history yet",
+                            style: TextStyle(color: Colors.black54),
+                          ),
+                        );
                       }
 
                       Map<dynamic, dynamic> historyMap =
-                      Map<dynamic, dynamic>.from(raw);
+                          Map<dynamic, dynamic>.from(raw);
 
                       List historyList = historyMap.values.toList();
 
                       // Sort newest first
                       historyList.sort(
-                              (a, b) => b['timestamp'].compareTo(a['timestamp']));
+                        (a, b) => b['timestamp'].compareTo(a['timestamp']),
+                      );
 
                       return ListView.builder(
                         itemCount: historyList.length,
@@ -157,11 +168,14 @@ class _StockdetialsState extends State<Stockdetials> {
 
                           return Card(
                             margin: const EdgeInsets.symmetric(
-                                vertical: 6, horizontal: 4),
+                              vertical: 6,
+                              horizontal: 4,
+                            ),
                             child: ListTile(
                               leading: CircleAvatar(
-                                backgroundColor:
-                                isAdd ? Colors.green : Colors.red,
+                                backgroundColor: isAdd
+                                    ? Colors.green
+                                    : Colors.red,
                                 child: Icon(
                                   isAdd ? Icons.add : Icons.remove,
                                   color: Colors.white,
@@ -170,11 +184,13 @@ class _StockdetialsState extends State<Stockdetials> {
                               title: Text(
                                 "${item['type']} ${item['amount']}",
                                 style: TextStyle(
-                                    color: isAdd ? Colors.green : Colors.red,
-                                    fontWeight: FontWeight.bold),
+                                  color: isAdd ? Colors.green : Colors.red,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               subtitle: Text(
-                                  "${item['date']}  |  ${item['time']}"),
+                                "${item['date']}  |  ${item['time']}",
+                              ),
                             ),
                           );
                         },
@@ -226,10 +242,11 @@ class _StockdetialsState extends State<Stockdetials> {
             controller: controller,
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
-                hintText: isAdd
-                    ? "Enter amount to add"
-                    : "Enter amount to subtract",
-                border: const OutlineInputBorder()),
+              hintText: isAdd
+                  ? "Enter amount to add"
+                  : "Enter amount to subtract",
+              border: const OutlineInputBorder(),
+            ),
           ),
           actions: [
             TextButton(
@@ -247,8 +264,10 @@ class _StockdetialsState extends State<Stockdetials> {
                 }
 
                 DatabaseEvent event = await stockRef.once();
-                int current = int.tryParse(
-                    event.snapshot.child("remaining").value.toString()) ??
+                int current =
+                    int.tryParse(
+                      event.snapshot.child("remaining").value.toString(),
+                    ) ??
                     0;
 
                 int newRemaining = isAdd ? current + value : current - value;
@@ -274,15 +293,16 @@ class _StockdetialsState extends State<Stockdetials> {
                   "amount": value.toString(),
                   "date": date,
                   "time": time,
-                  "timestamp": timestamp
+                  "timestamp": timestamp,
                 });
 
                 Navigator.pop(context);
               },
-              child: Text(isAdd ? "Add" : "Subtract",
-                  style:
-                  TextStyle(color: isAdd ? Colors.green : Colors.red)),
-            )
+              child: Text(
+                isAdd ? "Add" : "Subtract",
+                style: TextStyle(color: isAdd ? Colors.green : Colors.red),
+              ),
+            ),
           ],
         );
       },

@@ -12,6 +12,9 @@ class StockScreen extends StatefulWidget {
 }
 
 class _StockScreenState extends State<StockScreen> {
+  bool _issearching=false;
+  String _searchQuery='';
+  final searchcontroller=TextEditingController();
   final DatabaseReference stockRef =
   FirebaseDatabase.instance.ref('Total iteam stock');
 
@@ -19,10 +22,45 @@ class _StockScreenState extends State<StockScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xfff5f6fa),
-      appBar: AppBar(
-        title: const Text('Stock List'),
-        centerTitle: true,
-        backgroundColor: Colors.blueAccent,
+      appBar:  AppBar(
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        title: !_issearching
+            ? const Text(
+          "Stock List",
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+            color: Colors.blueAccent,
+          ),
+        )
+            : TextField(
+          autofocus: true,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: "Search customer...",
+            hintStyle: TextStyle(color: Colors.white54),
+            border: InputBorder.none,
+          ),
+          onChanged: (value) {
+            setState(() {
+              _searchQuery = value.trim();
+            });
+          },
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(
+                _issearching ? Icons.close : Icons.search,
+                color: Colors.white),
+            onPressed: () {
+              setState(() {
+                _issearching = !_issearching;
+                _searchQuery = "";
+              });
+            },
+          )
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
